@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruijie.mapper.BpmContactPlmMapper" >
+
+    <resultMap id="BaseResultMap" type="com.ruijie.bean.Result">
+        <result column="wf_docNumber" property="wfDocNumber" />
+        <result column="wf_addName_cn" property="wfAddNameCn"/>
+        <result column="wf_lastModified" property="wfLastModified"/>
+        <result column="businessUnit" property="businessUnit"  />
+        <result column="classify" property="classify" />
+        <result column="productDevCode" property="productDevCode"/>
+        <result column="productModel" property="productModel" />
+        <result column="productDevMode" property="productDevMode"/>
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        wfDocNumber,wfAddNameCn,wfLastModified,classify,businessUnit,productDevCode,productModel,productDevMode
+    </sql>
+
+    <sql id="PdmCg_UNION_PdmFc" >
+        (SELECT
+            WF_OrUnid,
+            pdm_DevelopmentCode AS productDevCode,
+            pdm_ProductModel AS productModel,
+            pdm_DevelopmentMode AS productDevMode
+            FROM
+            pdm_information_list_cg
+        UNION
+            SELECT
+            WF_OrUnid,
+            pdm_DevelopmentCode AS productDevCode,
+            pdm_ProductModel AS productModel,
+            pdm_DevelopmentMode AS productDevMode
+            FROM
+            pdm_information_list_fc)
+    </sql>
+
+    <sql id = "SELECT_BpmAllDocument">
+        (SELECT
+            WF_OrUNID,
+            WF_DocNumber AS wfDocNumber,
+            WF_AddName_CN AS wfAddNameCn,
+            WF_LastModified AS wfLastModified,
+            extractvalue (`XmlData`,'(/Items/WFItem[@name=\'xmgl\'])') AS `classify`,
+            extractvalue (`XmlData`,'(/Items/WFItem[@name=\'xmsssyb\'])') AS `businessUnit`
+            FROM
+            bpm_alldocument
+            WHERE WF_LastModified BETWEEN #{startDate}
+            AND #{endDate})
+    </sql>
+
+    <sql id="1">
+        11
+    </sql>
+
+
+    <select id="getBpmDataOnFlagIsOne" resultMap="BaseResultMap"  >
+        SELECT <include refid="Base_Column_List" />
+        FROM   <include refid="SELECT_BpmAllDocument"/> AS bpm_all
+        LEFT JOIN
+               <include refid="PdmCg_UNION_PdmFc"/>  AS pdm
+        ON  bpm_all.WF_OrUnid = pdm.WF_OrUnid
+    </select>
+
+
+
+</mapper>
